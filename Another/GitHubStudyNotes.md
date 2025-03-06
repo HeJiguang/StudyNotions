@@ -76,4 +76,28 @@ https://www.cnblogs.com/ttmaoxianjun/articles/14617125.html
 
 ## 使用Git将代码提交到GitHub
 
-使用Git将代码提交到Github上，主要会使用到两个
+使用Git将代码提交到Github上，主要会使用到两个push和pull 
+
+首先在github上建立仓库。
+
+其次在本地建立项目文件夹A。
+
+之后在文件夹中通过gitbush，用下面命令将github项目克隆到本地。`git clone 地址`
+
+该过程有时候需要收入github的账号密码之类的。
+
+### 上传代码
+
+在打开的文件夹中建立文件。
+
+后在文件夹中通过右键进入gitbush页面。
+
+之后使用`git add 文件名称`在git中添加新的文件。
+
+然后使用`git commit 注释`为本次更新添加备注，方便查找记忆。
+
+接着输入`git push origin main`将添加内容更新，就代表成功了。
+
+
+
+
