@@ -203,3 +203,193 @@ str.substr(0, 5);    // 获取子串
 str.compare("Hello"); // 字符串比较
 ```
 
+### String的内存管理机制
+
+String类在内部使用动态内存分配来管理字符串数据。了解其内存管理机制对于编写高效的代码至关重要。
+
+#### 1. 小字符串优化（Small String Optimization, SSO）
+
+```cpp
+// SSO的示例
+string small = "hi";     // 存储在栈上的小字符串
+string large(100, 'x');  // 存储在堆上的大字符串
+
+// 验证SSO
+cout << small.capacity() << endl;  // 通常是15或31，取决于实现
+```
+
+SSO的优点：
+- 减少堆内存分配
+- 提高小字符串操作性能
+- 减少内存碎片
+
+#### 2. 写时复制（Copy-On-Write, COW）
+
+某些String实现使用COW技术（虽然现代实现较少使用）：
+
+```cpp
+string str1 = "Hello";
+string str2 = str1;      // 此时只复制指针，共享数据
+str2[0] = 'h';          // 此时才会真正复制数据
+```
+
+### 性能优化技巧
+
+#### 1. 预分配内存
+
+```cpp
+string str;
+str.reserve(1000);  // 预分配1000字节，避免多次重新分配
+for(int i = 0; i < 1000; i++) {
+    str += char('a' + i % 26);
+}
+```
+
+#### 2. 使用移动语义
+
+```cpp
+string createString() {
+    string result = "Hello";
+    return result;  // 会触发移动构造，避免拷贝
+}
+
+string str = createString();  // 高效的移动赋值
+```
+
+#### 3. 字符串拼接优化
+
+```cpp
+// 低效方式
+string result;
+for(int i = 0; i < 100; i++) {
+    result += to_string(i);  // 每次都会重新分配内存
+}
+
+// 优化方式
+string result;
+result.reserve(1000);  // 预估大小
+for(int i = 0; i < 100; i++) {
+    result += to_string(i);
+}
+
+// 更优化的方式：使用ostringstream
+ostringstream oss;
+for(int i = 0; i < 100; i++) {
+    oss << i;
+}
+string result = oss.str();
+```
+
+### String vs 其他字符串处理方式
+
+#### 1. 与C风格字符串比较
+
+```cpp
+// C风格字符串
+const char* cstr = "Hello";
+size_t len = strlen(cstr);  // 需要遍历整个字符串
+char buffer[100];
+strcpy(buffer, cstr);      // 可能导致缓冲区溢出
+
+// C++ string
+string str = "Hello";
+size_t len = str.length(); // O(1)复杂度
+string str2 = str;         // 安全的拷贝
+```
+
+#### 2. 与string_view比较（C++17）
+
+```cpp
+#include <string_view>
+
+void process(string_view sv) {  // 高效的只读字符串视图
+    cout << sv.substr(0, 5) << endl;
+}
+
+string str = "Hello World";
+process(str);        // 不需要拷贝
+process("literal");  // 直接使用字面量
+```
+
+### 常见面试题和最佳实践
+
+1. String的线程安全性
+```cpp
+// String本身不是线程安全的
+string shared_str;
+mutex str_mutex;
+
+// 线程安全的访问方式
+void thread_safe_append(const string& text) {
+    lock_guard<mutex> lock(str_mutex);
+    shared_str += text;
+}
+```
+
+2. 内存泄漏防范
+```cpp
+// 避免内存泄漏的最佳实践
+void process_string() {
+    string* str_ptr = new string("Hello");
+    // ... 处理逻辑 ...
+    delete str_ptr;  // 必须记得释放
+    
+    // 更好的方式：使用智能指针
+    unique_ptr<string> safe_str = make_unique<string>("Hello");
+    // 离开作用域时自动释放
+}
+```
+
+3. 性能陷阱
+```cpp
+// 避免不必要的拷贝
+void bad_practice(string str) {  // 参数按值传递
+    // ...
+}
+
+void good_practice(const string& str) {  // 使用const引用
+    // ...
+}
+
+// 避免频繁的字符串拼接
+string result;
+for(const auto& str : vector_of_strings) {
+    result += str;  // 每次都会重新分配内存
+}
+
+// 更好的方式
+vector<string> strings = {...};
+size_t total_size = 0;
+for(const auto& s : strings) {
+    total_size += s.size();
+}
+result.reserve(total_size);
+for(const auto& s : strings) {
+    result += s;
+}
+```
+
+### 高级应用场景
+
+1. 自定义String类的内存分配器
+```cpp
+template <typename Allocator = allocator<char>>
+class basic_string {
+    // ...
+};
+
+// 使用自定义分配器
+using MyString = basic_string<MyAllocator<char>>;
+```
+
+2. 与正则表达式配合使用
+```cpp
+#include <regex>
+
+string text = "Email: example@domain.com";
+regex pattern(R"(\w+@\w+\.\w+)");
+smatch matches;
+if(regex_search(text, matches, pattern)) {
+    cout << "Found email: " << matches[0] << endl;
+}
+```
